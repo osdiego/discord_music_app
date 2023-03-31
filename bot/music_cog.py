@@ -179,8 +179,8 @@ class MusicCog(commands.Cog):
             if list_to_me:
                 list_queue = ""
 
-                for i in range(0, number_of_musics):
-                    list_queue += f'{i+1} - {self.music_queue[i][0]["title"]}\n'
+                for i, music in enumerate(self.music_queue):
+                    list_queue += f'{i+1} - {music[0]["title"]}\n'
 
                 await ctx.send(list_queue)
         else:

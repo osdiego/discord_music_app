@@ -8,7 +8,7 @@ from music_cog import MusicCog
 
 logging.basicConfig(level=logging.INFO)
 
-bot = commands.Bot(command_prefix="/", intents=Intents.all())
+bot = commands.Bot(command_prefix=".", intents=Intents.all())
 
 
 async def main():
