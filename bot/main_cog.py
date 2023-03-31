@@ -30,10 +30,6 @@ Music commands:
                 self.text_channel_list.append(channel)
         print(f"The {self.bot.user.name} will look after you!")
 
-    # @commands.command(name="help", help="Displays all the available commands")
-    # async def help(self, ctx):
-    #     await ctx.send(self.help_message)
-
     async def send_to_all(self, message: str) -> None:
         for text_channel in self.text_channel_list:
             await text_channel.send(message)
@@ -64,17 +60,17 @@ Music commands:
         await ctx.send(f"Just deleted {len(deleted)} messages!", delete_after=10)
 
     @commands.command()
-    async def hello(self, ctx: object) -> None:
-        """
-        Answer you with a nice message!
-        """
+    async def hello(self, ctx: commands.Context) -> None:
+        """Answer you with a nice message!"""
         await ctx.send(f"Hello, {ctx.author.display_name}!", delete_after=60 * 1)
 
     @commands.command()
-    async def garbage(self, ctx: object, amount: int) -> None:
-        """
-        Inserts a bunch of messages on the channel so you can test the clear command.
-        @param amount: (int) The number of messages to be added.
+    async def garbage(self, ctx: commands.Context, amount: int) -> None:
+        """Inserts a bunch of messages on the channel so you can test the clear
+        command.
+
+        Args:
+            amount (int): The number of messages to be added.
         """
         for number in range(1, amount + 1):
             await ctx.send(number)

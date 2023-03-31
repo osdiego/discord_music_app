@@ -1,11 +1,13 @@
+"""
+Prototype of new feature. Not ready to use.
+"""
 import os
 import random
 import shutil
 
-from google_images_download import google_images_download
-
 import discord
 from discord.ext import commands
+from google_images_download import google_images_download
 
 
 # responsible for handling all of the image commands
@@ -28,8 +30,9 @@ class image_cog(commands.Cog):
         # get the latest in the folder
         self.update_images()
 
-    @commands.command(name="get", help="Displays random image from the downloads")
+    @commands.command(name="get")
     async def get(self, ctx):
+        """Displays random image from the downloads"""
         img = self.image_names[random.randint(0, len(self.image_names) - 1)]
         await ctx.send(file=discord.File(img))
 
@@ -50,8 +53,9 @@ class image_cog(commands.Cog):
         for filename in os.listdir(self.download_folder):
             self.image_names.append(os.path.join(self.download_folder, filename))
 
-    @commands.command(name="search", help="searches for a message on google")
+    @commands.command(name="search")
     async def search(self, ctx, *args):
+        """Searches for a message on Google"""
         self.clear_folder()
 
         # fill the folder with new images

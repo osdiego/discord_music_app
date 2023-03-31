@@ -26,9 +26,7 @@ class MusicCog(commands.Cog):
         self.voice_channel = ""
 
     def search_yt(self, item):
-        """
-        Searching the item on youtube.
-        """
+        """Searching the item on youtube."""
         with YoutubeDL(self.YDL_OPTIONS) as ydl:
             try:
                 info = ydl.extract_info("ytsearch:%s" % item, download=False)[
@@ -44,7 +42,7 @@ class MusicCog(commands.Cog):
             "duration": info["duration"],
         }
 
-    def play_next(self, ctx) -> None:
+    def play_next(self, ctx: commands.Context) -> None:
         if self.music_queue:
             # remove the first element as you are going to play it
             music = self.music_queue.pop(0)[0]
@@ -60,9 +58,7 @@ class MusicCog(commands.Cog):
             self.is_playing = False
 
     async def play_music(self, ctx: object) -> None:
-        """
-        Infinite loop checking.
-        """
+        """Infinite loop checking."""
 
         if self.music_queue:
             self.is_playing = True
@@ -101,8 +97,9 @@ class MusicCog(commands.Cog):
             if not self.is_playing:
                 await self.exit(ctx)
 
-    @commands.command(aliases=["p"], help="Plays a selected song from youtube")
-    async def play(self, ctx: object, *args) -> None:
+    @commands.command(aliases=["p"])
+    async def play(self, ctx: commands.Context, *args) -> None:
+        """Plays a selected song from youtube"""
         query = " ".join(args)
 
         try:
@@ -134,8 +131,43 @@ class MusicCog(commands.Cog):
                 else:
                     await self.play_music(ctx)
 
-    @commands.command(aliases=["q"], help="Displays the current songs in queue")
-    async def queue(self, ctx: object, list_to_me=True) -> None:
+    @commands.command()
+    async def pause(self, ctx: commands.Context) -> None:
+        """Pause the currently playing song."""
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_playing():
+            embed = discord.Embed(
+                description="I am currently not playing anything.",
+                color=discord.Color.green(),
+            )
+            return await ctx.send(embed=embed)
+        elif vc.is_paused():
+            return
+
+        vc.pause()
+        await ctx.send("Paused ⏸️")
+
+    @commands.command()
+    async def resume(self, ctx: commands.Context) -> None:
+        """Resume the currently paused song"""
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(
+                description="I'm not connected to a voice channel.",
+                color=discord.Color.green(),
+            )
+            return await ctx.send(embed=embed)
+        elif not vc.is_paused():
+            return
+
+        vc.resume()
+        await ctx.send("Resuming ⏯️")
+
+    @commands.command(aliases=["q"])
+    async def queue(self, ctx: commands.Context, list_to_me=True) -> None:
+        """Displays the current songs in queue"""
         if self.music_queue:
             number_of_musics = len(self.music_queue)
 
@@ -154,16 +186,18 @@ class MusicCog(commands.Cog):
         else:
             await ctx.send("No music in queue..")
 
-    @commands.command(aliases=["jump", "j"], help="Skips the current song being played")
-    async def skip(self, ctx: object) -> None:
+    @commands.command(aliases=["jump", "j"])
+    async def skip(self, ctx: commands.Context) -> None:
+        """Skips the current song being played"""
         if self.voice_channel != "" and self.voice_channel:
             self.voice_channel.stop()
 
             # try to play next in the queue if it exists
             await self.play_music(ctx)
 
-    @commands.command(aliases=["quit"], help="Removes the bot from the channel")
-    async def exit(self, ctx: object) -> None:
+    @commands.command(aliases=["quit", "stop"])
+    async def exit(self, ctx: commands.Context) -> None:
+        """Removes the bot from the channel"""
         if self.voice_channel != "" and self.voice_channel.is_connected():
             self.voice_channel.stop()
             await self.voice_channel.disconnect()
