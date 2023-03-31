@@ -1,8 +1,8 @@
-from discord.ext import commands
+from discord.ext.commands import Bot, Cog, Context, command
 
 
-class MainCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+class MainCog(Cog):
+    def __init__(self, bot: Bot):
         self.bot = bot
         self.text_channel_list = []
         # self.help_message = """
@@ -23,7 +23,7 @@ Music commands:
 """
 
     # some debug info so that we know the bot has started
-    @commands.Cog.listener()
+    @Cog.listener()
     async def on_ready(self) -> None:
         for guild in self.bot.guilds:
             for channel in guild.text_channels:
@@ -34,11 +34,10 @@ Music commands:
         for text_channel in self.text_channel_list:
             await text_channel.send(message)
 
-    @commands.command(aliases=["cls", "delete", "del", "purge"])
-    @commands.has_permissions(manage_messages=True)
+    @command(aliases=["cls", "delete", "del", "purge"])
     async def clear(
         self,
-        ctx: commands.Context,
+        ctx: Context,
         amount: int = 5,
         # to be implemented in a future release
         # like: str = None,
@@ -59,13 +58,13 @@ Music commands:
 
         await ctx.send(f"Just deleted {len(deleted)} messages!", delete_after=10)
 
-    @commands.command()
-    async def hello(self, ctx: commands.Context) -> None:
+    @command()
+    async def hello(self, ctx: Context) -> None:
         """Answer you with a nice message!"""
         await ctx.send(f"Hello, {ctx.author.display_name}!", delete_after=60 * 1)
 
-    @commands.command()
-    async def garbage(self, ctx: commands.Context, amount: int) -> None:
+    @command()
+    async def garbage(self, ctx: Context, amount: int) -> None:
         """Inserts a bunch of messages on the channel so you can test the clear
         command.
 

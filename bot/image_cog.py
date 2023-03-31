@@ -30,7 +30,7 @@ class image_cog(commands.Cog):
         # get the latest in the folder
         self.update_images()
 
-    @commands.command(name="get")
+    @command(name="get")
     async def get(self, ctx):
         """Displays random image from the downloads"""
         img = self.image_names[random.randint(0, len(self.image_names) - 1)]
@@ -53,7 +53,7 @@ class image_cog(commands.Cog):
         for filename in os.listdir(self.download_folder):
             self.image_names.append(os.path.join(self.download_folder, filename))
 
-    @commands.command(name="search")
+    @command(name="search")
     async def search(self, ctx, *args):
         """Searches for a message on Google"""
         self.clear_folder()

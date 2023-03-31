@@ -2,13 +2,13 @@ import asyncio
 import logging
 
 from discord import Intents
-from discord.ext import commands
+from discord.ext.commands import Bot
 from main_cog import MainCog
 from music_cog import MusicCog
 
 logging.basicConfig(level=logging.INFO)
 
-bot = commands.Bot(command_prefix=".", intents=Intents.all())
+bot = Bot(command_prefix=".", intents=Intents.all())
 
 
 async def main():
