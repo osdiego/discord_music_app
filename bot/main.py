@@ -26,7 +26,5 @@ asyncio.run(main())
 
 # start the bot with our token
 token = "ODgwODgzNTE3NzU0NTk3Mzk3.YSkwtA.c2pCqL-POk6sFxDY0PdHp001Fis"
-# with open('token.txt') as file:
-#    token = file.read()
 bot.run(token)
 # #bot.run(os.getenv("TOKEN"))

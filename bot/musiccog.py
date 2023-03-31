@@ -14,18 +14,6 @@ class MusicCog(commands.Cog):
 
         # 2d array containing [song, channel]
         self.music_queue = []
-        # self.YDL_OPTIONS = {
-        #     "format": "bestaudio/best",
-        #     "restrictfilenames": True,
-        #     "noplaylist": True,
-        #     "nocheckcertificate": True,
-        #     "ignoreerrors": False,
-        #     "logtostderr": False,
-        #     "quiet": True,
-        #     "no_warnings": True,
-        #     "default_search": "auto",
-        #     "source_address": True,
-        # }
         self.YDL_OPTIONS = {
             "format": "bestaudio",
             "noplaylist": True,
@@ -46,13 +34,12 @@ class MusicCog(commands.Cog):
                 info = ydl.extract_info("ytsearch:%s" % item, download=False)[
                     "entries"
                 ][0]
-            except Exception as error:
-                print(error)
-                print(type(error))
+            except Exception:
                 return False
 
         return {
-            "source": info["formats"][0]["url"],
+            # this is the new format, instead of info["formats"][0]["url"]
+            "source": info["url"],
             "title": info["title"],
             "duration": info["duration"],
         }
@@ -60,7 +47,7 @@ class MusicCog(commands.Cog):
     def play_next(self, ctx) -> None:
         if self.music_queue:
             # remove the first element as you are going to play it
-            music, channel = self.music_queue.pop(0)
+            music = self.music_queue.pop(0)[0]
 
             # get the music url
             music_url = music["source"]
@@ -82,12 +69,9 @@ class MusicCog(commands.Cog):
 
             # remove the first element as you are going to play it
             music, channel = self.music_queue.pop(0)
-            print(music)
-            print(channel)
 
             # get the music url
             music_url = music["source"]
-            print(music_url)
 
             # try to connect to voice channel if you are not already connected
             if (
@@ -99,18 +83,15 @@ class MusicCog(commands.Cog):
             elif self.voice_channel != channel:
                 self.voice_channel.move_to(channel)
 
-            print(self.voice_channel)
             # play the music using FFMPEG
             self.voice_channel.play(
                 discord.FFmpegPCMAudio(music_url, **self.FFMPEG_OPTIONS),
                 after=lambda e: self.play_next(ctx),
             )
-            print(4)
 
             await ctx.send(
                 f'Playing {music["title"]} for the next {music["duration"]} seconds!'
             )
-            print(5)
         else:
             await ctx.send("No music in queue..")
             self.is_playing = False
@@ -124,13 +105,19 @@ class MusicCog(commands.Cog):
     async def play(self, ctx: object, *args) -> None:
         query = " ".join(args)
 
-        actual_voice_channel = ctx.author.voice.channel
-        if actual_voice_channel is None:
-            print(11111)
+        try:
+            voice_channel = ctx.author.voice.channel
+        except AttributeError:
+            voice_channel = None
+
+        if not voice_channel:
             # you need to be connected so that the bot knows where to go
-            await ctx.send("Connect to a voice channel!")
+            embed = discord.Embed(
+                description="Connect to a voice channel!",
+                color=discord.Color.green(),
+            )
+            return await ctx.send(embed=embed)
         else:
-            print(111111111111111111111111111111111)
             song = self.search_yt(query)
             if isinstance(song, bool):
                 await ctx.send(
@@ -138,7 +125,7 @@ class MusicCog(commands.Cog):
                     "or a livestream format."
                 )
             else:
-                self.music_queue.append([song, actual_voice_channel])
+                self.music_queue.append([song, voice_channel])
 
                 if self.is_playing:
                     await ctx.send(
