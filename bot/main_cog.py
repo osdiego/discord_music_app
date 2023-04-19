@@ -48,7 +48,7 @@ Music commands:
         @param amount: (int, optional) The maximum number of messages to delete. Defaults to 5.
         """
         # @param like: (string, optional) A substring to use as a filter.
-        deleted = await ctx.channel.purge(limit=amount)
+        deleted = await ctx.channel.purge(limit=amount + 1)
 
         # deleted = 0
         # async for message in ctx.channel.history(limit=amount):
