@@ -2,7 +2,7 @@ import asyncio
 
 import discord
 from discord.ext.commands import Bot, Cog, Context, command
-from yt_dlp import YoutubeDL
+from utils import Playlist, search_yt
 
 
 class MusicCog(Cog):
@@ -14,10 +14,6 @@ class MusicCog(Cog):
 
         # 2d array containing [song, channel]
         self.music_queue = []
-        self.YDL_OPTIONS = {
-            "format": "bestaudio",
-            "noplaylist": True,
-        }
         self.FFMPEG_OPTIONS = {
             "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
             "options": "-vn",
@@ -25,30 +21,13 @@ class MusicCog(Cog):
 
         self.voice_channel = ""
 
-    def search_yt(self, item):
-        """Searching the item on youtube."""
-        with YoutubeDL(self.YDL_OPTIONS) as ydl:
-            try:
-                info = ydl.extract_info("ytsearch:%s" % item, download=False)[
-                    "entries"
-                ][0]
-            except Exception:
-                return False
-
-        return {
-            # this is the new format, instead of info["formats"][0]["url"]
-            "source": info["url"],
-            "title": info["title"],
-            "duration": info["duration"],
-        }
-
     def play_next(self, ctx: Context) -> None:
         if self.music_queue:
             # remove the first element as you are going to play it
             music = self.music_queue.pop(0)[0]
 
             # get the music url
-            music_url = music["source"]
+            music_url = music["url"]
 
             self.voice_channel.play(
                 discord.FFmpegPCMAudio(music_url, **self.FFMPEG_OPTIONS),
@@ -67,7 +46,7 @@ class MusicCog(Cog):
             music, channel = self.music_queue.pop(0)
 
             # get the music url
-            music_url = music["source"]
+            music_url = music["url"]
 
             # try to connect to voice channel if you are not already connected
             if (
@@ -115,7 +94,7 @@ class MusicCog(Cog):
             )
             return await ctx.send(embed=embed)
         else:
-            song = self.search_yt(query)
+            song = search_yt(query)
             if isinstance(song, bool):
                 await ctx.send(
                     "Could not download the song. Incorrect format try another keyword. This could be due to playlist "
@@ -185,6 +164,99 @@ class MusicCog(Cog):
                 await ctx.send(list_queue)
         else:
             await ctx.send("No music in queue..")
+
+    @command(aliases=["add_to_p", "add_t_p"])
+    async def add_to_playlist(self, ctx: Context, *args) -> None:
+        """Adds a music to the specified playlist
+        Examples:
+            .add_to_playlist sweet but psycho @@playlist name
+        """
+        try:
+            music, playlist_name = " ".join(args).split("@@")
+        except ValueError:
+            await ctx.send("Playlist marker not found at the end: @@playlist")
+            return
+
+        playlist = Playlist(name=playlist_name)
+        added = playlist.add(music=music)
+        if added:
+            await ctx.send(f"Adding \"{added['title']}\" to @@{playlist.name}")
+        else:
+            await ctx.send(
+                f"An error has occurred, please try with another music name."
+            )
+
+    @command(aliases=["remove_from_p", "remove_f_p"])
+    async def remove_from_playlist(self, ctx: Context, *args) -> None:
+        """Removes all occurrences of a music from the specified playlist
+        Examples:
+            .remove_from_playlist sweet but psycho @@playlist name
+        """
+        try:
+            music, playlist_name = " ".join(args).split("@@")
+        except ValueError:
+            await ctx.send("Playlist marker not found at the end: @@playlist")
+            return
+
+        playlist = Playlist(name=playlist_name)
+        songs_removed = playlist.remove(music=music)
+        await ctx.send(
+            f"{songs_removed} occurrences found and removed from the playlist."
+        )
+
+    @command(aliases=["delete_p", "del_p"])
+    async def delete_playlist(self, ctx: Context, *args) -> None:
+        """Deletes the given playlist.
+        Examples:
+            .delete_playlist playlist name
+        """
+        playlist = Playlist(name=" ".join(args))
+        playlist.purge()
+        await ctx.send(f"Playlist @@{playlist.name} deleted.")
+
+    @command(aliases=["p_playlist", "p_p", "pp"])
+    async def play_playlist(self, ctx: Context, *args) -> None:
+        """Add the musics to the given playlist to the queue.
+        Examples:
+            .play_playlist playlist name
+        """
+        try:
+            voice_channel = ctx.author.voice.channel
+        except AttributeError:
+            voice_channel = None
+
+        if not voice_channel:
+            # you need to be connected so that the bot knows where to go
+            embed = discord.Embed(
+                description="Connect to a voice channel!",
+                color=discord.Color.green(),
+            )
+            return await ctx.send(embed=embed)
+
+        playlist = Playlist(name=" ".join(args))
+        for song in playlist.musics:
+            self.music_queue.append([song, voice_channel])
+
+        if self.is_playing:
+            await ctx.send("All songs added to the and of the current queue.")
+        else:
+            await self.play_music(ctx)
+
+    @command(aliases=["list_p", "l_p"])
+    async def list_playlist(self, ctx: Context, *args) -> None:
+        """Displays the current songs in the playlist."""
+        playlist = Playlist(name=" ".join(args))
+        if playlist.musics:
+            await ctx.send(f"{len(playlist.musics)} music(s) in queue!")
+
+            list_queue = ""
+
+            for i, music in enumerate(playlist.musics):
+                list_queue += f'{i+1} - {music["title"]}\n'
+
+            await ctx.send(list_queue)
+        else:
+            await ctx.send("No musics in playlist..")
 
     @command(aliases=["jump", "j"])
     async def skip(self, ctx: Context) -> None:

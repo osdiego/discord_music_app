@@ -5,7 +5,9 @@ from discord import Intents
 from discord.ext.commands import Bot
 from main_cog import MainCog
 from music_cog import MusicCog
+from utils import safe_mkdir
 
+safe_mkdir(folder="playlists")
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(command_prefix=".", intents=Intents.all())
