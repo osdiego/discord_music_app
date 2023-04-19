@@ -247,7 +247,7 @@ class MusicCog(Cog):
         """Displays the current songs in the playlist."""
         playlist = Playlist(name=" ".join(args))
         if playlist.musics:
-            await ctx.send(f"{len(playlist.musics)} music(s) in queue!")
+            await ctx.send(f"{len(playlist.musics)} music(s) in playlist!")
 
             list_queue = ""
 
