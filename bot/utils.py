@@ -3,6 +3,7 @@ import os
 from typing import Union
 
 from yt_dlp import YoutubeDL
+from yt_dlp.utils import DownloadError
 
 
 class MusicQueue:
@@ -53,21 +54,48 @@ def safe_mkdir(folder: str) -> None:
 def search_yt(item: str) -> Union[bool, dict[str, Union[str, int]]]:
     """Searching the item on YouTube."""
     YDL_OPTIONS = {
-        "format": "bestaudio",
-        "noplaylist": True,
+        "format": "bestaudio/best",
+        "noplaylist": False,
     }
     with YoutubeDL(YDL_OPTIONS) as ydl:
         try:
-            info = ydl.extract_info("ytsearch:%s" % item, download=False)["entries"][0]
-        except Exception as e:
-            print(e)
-            return False
+            print("Trying default download")
+            info = ydl.extract_info(item, download=False)
 
-    return {
-        "title": info["title"],
-        "duration": info["duration"],
-        "url": info["url"],
-    }
+            if "_type" in info.keys() and info["_type"] == "playlist":
+                if len(info["entries"]) == 0:
+                    raise ValueError("No musics found in YouTube playlist.")
+
+                songs = [
+                    {
+                        "title": song["title"],
+                        "duration": song["duration"],
+                        "url": song["url"],
+                    }
+                    for song in info["entries"]
+                ]
+                return songs
+
+            return [
+                {
+                    "title": info["title"],
+                    "duration": info["duration"],
+                    "url": info["url"],
+                }
+            ]
+
+        except DownloadError:
+            print("Trying search download")
+            info = ydl.extract_info("ytsearch:%s" % item, download=False)
+
+            info = info["entries"][0]
+            return [
+                {
+                    "title": info["title"],
+                    "duration": info["duration"],
+                    "url": info["url"],
+                }
+            ]
 
 
 class Playlist:

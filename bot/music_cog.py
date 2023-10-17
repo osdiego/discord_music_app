@@ -64,9 +64,11 @@ class MusicCog(Cog):
                 after=lambda e: self.play_next(ctx),
             )
 
-            await ctx.send(
-                f'Playing {music["title"]} for the next {music["duration"]} seconds!'
+            embed = discord.Embed(
+                description=f'Playing {music["title"]} for the next {music["duration"]} seconds!',
+                color=discord.Color.yellow(),
             )
+            await ctx.send(embed=embed)
         else:
             await ctx.send("No music in queue..")
             self.is_playing = False
@@ -93,22 +95,25 @@ class MusicCog(Cog):
                 color=discord.Color.green(),
             )
             return await ctx.send(embed=embed)
-        else:
-            song = search_yt(query)
-            if isinstance(song, bool):
-                await ctx.send(
-                    "Could not download the song. Incorrect format try another keyword. This could be due to playlist "
-                    "or a livestream format."
-                )
-            else:
-                self.music_queue.append([song, voice_channel])
 
-                if self.is_playing:
-                    await ctx.send(
-                        f'Song added to the queue: {song["title"]}! \nDuration: {song["duration"]}'
-                    )
-                else:
-                    await self.play_music(ctx)
+        try:
+            songs = search_yt(query)
+        except Exception as e:
+            return await ctx.send(f"Error: {e}")
+
+        if isinstance(songs, str):
+            return await ctx.send(f"Error: {songs}")
+
+        for index, song in enumerate(songs):
+            self.music_queue.append([song, voice_channel])
+            embed = discord.Embed(
+                description=f'{index+1} - Song added to the queue: {song["title"]}\nDuration: {song["duration"]}',
+                color=discord.Color.yellow(),
+            )
+            await ctx.send(embed=embed)
+
+        if not self.is_playing:
+            await self.play_music(ctx)
 
     @command()
     async def pause(self, ctx: Context) -> None:
@@ -161,7 +166,11 @@ class MusicCog(Cog):
                 for i, music in enumerate(self.music_queue):
                     list_queue += f'{i+1} - {music[0]["title"]}\n'
 
-                await ctx.send(list_queue)
+                embed = discord.Embed(
+                    description=list_queue,
+                    color=discord.Color.yellow(),
+                )
+                await ctx.send(embed=embed)
         else:
             await ctx.send("No music in queue..")
 
