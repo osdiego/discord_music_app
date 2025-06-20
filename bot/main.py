@@ -1,11 +1,16 @@
 import asyncio
 import logging
+import os
 
 from discord import Intents
 from discord.ext.commands import Bot
+from dotenv import load_dotenv
 from main_cog import MainCog
 from music_cog import MusicCog
 from utils import safe_mkdir
+
+# Load environment variables from .env file
+load_dotenv()
 
 safe_mkdir(folder="playlists")
 logging.basicConfig(level=logging.INFO)
@@ -23,5 +28,5 @@ async def main():
 asyncio.run(main())
 
 # start the bot with our token
-TOKEN = "ODgwODgzNTE3NzU0NTk3Mzk3.YSkwtA.c2pCqL-POk6sFxDY0PdHp001Fis"
+TOKEN = os.getenv("DISCORD_TOKEN")
 bot.run(TOKEN)
